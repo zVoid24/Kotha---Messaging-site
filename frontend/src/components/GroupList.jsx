@@ -9,7 +9,10 @@ export default function GroupList({ groups, currentGroup, onSelectGroup }) {
         {groups.map(group => (
           <li 
             key={group._id} 
-            onClick={() => onSelectGroup(group)}
+            onClick={() => { 
+                console.log(group._id);
+                
+                onSelectGroup(group)}}
             className={`cursor-pointer px-4 py-2 rounded mb-1 ${
               currentGroup?._id === group._id ? 'bg-blue-500 text-white' : 'hover:bg-gray-200'
             }`}

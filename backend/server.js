@@ -28,55 +28,54 @@ app.use('/api/groups', groupRoutes);
 
 // Socket.io
 io.on('connection', socket => {
-  console.log('Client connected:', socket.id);
+  console.log('New client connected:', socket.id);
 
-  // Join personal room
   socket.on('join', (userId) => {
-    socket.join(userId);
+    socket.join(userId); // personal room
     console.log(`User ${userId} joined room`);
   });
 
-  // Send message (private or group)
- socket.on('sendMessage', async (msg) => {
-  try {
-    // Save message to DB
-    const message = new Message(msg);
-    const savedMsg = await message.save();
+  socket.on('sendMessage', async (msg) => {
+    try {
+      const message = new Message(msg);
+      const savedMsg = await message.save();
 
-    if (msg.group) {
-      // Group chat: broadcast to all members except sender
-      const group = await Group.findById(msg.group);
-      group.members.forEach(memberId => {
-        if (memberId.toString() !== msg.sender) {
-          io.to(memberId.toString()).emit('receiveMessage', savedMsg);
-        }
-      });
-    } else if (msg.receiver) {
-      // Private message: send to receiver
-      io.to(msg.receiver).emit('receiveMessage', savedMsg);
+      // populate sender info for frontend
+      const populatedMsg = await Message.findById(savedMsg._id)
+        .populate('sender', 'username _id')
+        .populate('receiver', 'username _id');
+
+      if (msg.group) {
+        // Group message: broadcast to all members
+        const group = await Group.findById(msg.group).populate('members', '_id');
+        group.members.forEach(member => {
+          io.to(member._id.toString()).emit('receiveMessage', populatedMsg);
+        });
+      } else if (msg.receiver) {
+        // Private message
+        io.to(msg.receiver).emit('receiveMessage', populatedMsg);
+      }
+
+      // Emit back to sender
+      socket.emit('messageDelivered', populatedMsg);
+    } catch (err) {
+      console.error('Error sending message:', err);
+      socket.emit('messageError', { error: 'Failed to send message' });
     }
+  });
 
-    // Send back to sender with saved message
-    socket.emit('messageDelivered', savedMsg);
-  } catch (err) {
-    console.error('Error sending message:', err);
-    socket.emit('messageError', { error: 'Failed to send message' });
-  }
-});
-
-  // Mark messages as seen (private only)
+  // Mark private messages as seen
   socket.on('markAsSeen', async ({ senderId, receiverId }) => {
     try {
       const result = await Message.updateMany(
         { sender: senderId, receiver: receiverId, seen: false },
         { $set: { seen: true } }
       );
-
       const eventData = { senderId, receiverId };
       io.to(senderId).emit('messagesSeen', eventData);
       io.to(receiverId).emit('messagesSeen', eventData);
     } catch (err) {
-      console.error(err);
+      console.error('Error marking messages as seen:', err);
     }
   });
 

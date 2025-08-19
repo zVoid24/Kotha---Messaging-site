@@ -4,21 +4,39 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const Message = require('../models/Message');
 
+// routes/message.js
+// GET unseen messages count (private + groups)
 router.get('/unseen/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    console.log('Fetching unseen for user:', userId);
-    const unseenMessages = await Message.aggregate([
+
+    // Private messages
+    const unseenPrivate = await Message.aggregate([
       { $match: { receiver: new mongoose.Types.ObjectId(userId), seen: false } },
       { $group: { _id: '$sender', count: { $sum: 1 } } }
     ]);
-    console.log('Unseen messages:', unseenMessages);
-    res.json(unseenMessages);
+
+    // Group messages
+    const unseenGroup = await Message.aggregate([
+      { $match: { group: { $exists: true }, seen: false } },
+      { $lookup: {
+          from: 'groups',
+          localField: 'group',
+          foreignField: '_id',
+          as: 'groupInfo'
+      }},
+      { $unwind: '$groupInfo' },
+      { $match: { 'groupInfo.members': new mongoose.Types.ObjectId(userId) } },
+      { $group: { _id: '$group', count: { $sum: 1 } } }
+    ]);
+
+    res.json({ private: unseenPrivate, group: unseenGroup });
   } catch (err) {
-    console.error('Unseen messages error:', err);
-    res.status(500).json({ message: 'Server error fetching unseen messages' });
+    console.error(err);
+    res.status(500).json({ message: 'Error fetching unseen counts' });
   }
 });
+
 
 router.get('/:userId/:friendId', async (req, res) => {
   try {
@@ -66,5 +84,21 @@ router.get('/:userId/:friendId', async (req, res) => {
     res.status(500).json({ message: 'Server error fetching messages' });
   }
 });
+
+// GET group messages
+router.get('/group/:groupId', async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const messages = await Message.find({ group: groupId })
+      .sort({ createdAt: 1 })
+      .populate('sender', 'username _id')
+      .populate('receiver', 'username _id');
+    res.json(messages);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to fetch group messages' });
+  }
+});
+
 
 module.exports = router;
