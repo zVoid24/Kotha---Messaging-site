@@ -38,6 +38,22 @@ router.get('/unseen/:userId', async (req, res) => {
 });
 
 
+// GET group messages
+router.get('/group/:groupId', async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const messages = await Message.find({ group: groupId })
+      .sort({ createdAt: 1 })
+      .populate('sender', 'username _id')
+      .populate('receiver', 'username _id');
+    res.json(messages);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to fetch group messages' });
+  }
+});
+
+
 router.get('/:userId/:friendId', async (req, res) => {
   try {
     const { userId, friendId } = req.params;
@@ -85,20 +101,7 @@ router.get('/:userId/:friendId', async (req, res) => {
   }
 });
 
-// GET group messages
-router.get('/group/:groupId', async (req, res) => {
-  try {
-    const { groupId } = req.params;
-    const messages = await Message.find({ group: groupId })
-      .sort({ createdAt: 1 })
-      .populate('sender', 'username _id')
-      .populate('receiver', 'username _id');
-    res.json(messages);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Failed to fetch group messages' });
-  }
-});
+
 
 
 module.exports = router;

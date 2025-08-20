@@ -1,20 +1,28 @@
 // src/components/ChatBox.jsx
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef,  } from 'react';
 import moment from 'moment';
+import axios from 'axios';
 
 export default function ChatBox({ messages, currentUserId }) {
   const messagesEndRef = useRef(null);
 
+
   // Scroll to bottom whenever messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    
   }, [messages]);
+
+ 
 
   return (
     <div className="flex-1 overflow-y-auto space-y-2 px-2">
       {messages.map((m) => {
         const isMe = m.sender === currentUserId;
+        const currentUserName = m.sender.username;
         return (
+          <>
+          <div key={m._id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} text-xs`}>{currentUserName}</div>
           <div key={m._id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-xs break-words p-3 rounded-xl ${isMe ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}>
               <p>{m.text}</p>
@@ -24,6 +32,7 @@ export default function ChatBox({ messages, currentUserId }) {
               </span>
             </div>
           </div>
+          </>
         );
       })}
       {/* Dummy div to scroll into view */}

@@ -193,7 +193,7 @@ export default function Chat() {
       <div className="flex-1 flex flex-col">
         <Header friend={currentFriend} group={currentGroup} />
         <div className="flex-1 overflow-y-auto p-4">
-          <ChatBox messages={messages} currentUserId={user.id} />
+          <ChatBox messages={messages} currentUserId={user.id} currentUserName={user.username}/>
           <div ref={chatEndRef} />
         </div>
         {(currentFriend || currentGroup) && (
