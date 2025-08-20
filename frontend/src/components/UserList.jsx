@@ -1,8 +1,8 @@
-// src/components/UserList.jsx
+
 import React from 'react';
 
 export default function UserList({ users, currentFriend, onSelectFriend, unseenCounts }) {
-  // Convert unseenCounts array to a map for faster lookup
+  
   const unseenMap = unseenCounts.reduce((acc, item) => {
     acc[item._id] = item.count;
     return acc;

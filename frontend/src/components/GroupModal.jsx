@@ -3,12 +3,12 @@ import axios from 'axios';
 
 export default function GroupModal({ onClose, onCreated }) {
   const [name, setName] = useState('');
-  const [members, setMembers] = useState([]); // array of user IDs
+  const [members, setMembers] = useState([]); 
   const [users, setUsers] = useState([]);
 
   const user = JSON.parse(localStorage.getItem('user'));
 
-  // Fetch users for group
+  
   useState(() => {
     axios.get('http://localhost:5000/api/auth/users')
       .then(res => setUsers(res.data.filter(u => u._id !== user.id)))

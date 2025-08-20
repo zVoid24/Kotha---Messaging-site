@@ -5,11 +5,11 @@ import { useNavigate } from 'react-router-dom';
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(''); // ✅ for error messages
+  const [error, setError] = useState(''); 
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    setError(''); // reset error
+    setError(''); 
     if (!username || !password) {
       setError("Please fill in both username and password");
       return;
